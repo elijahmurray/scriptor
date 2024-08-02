@@ -5,16 +5,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { prompt, max_tokens } = req.body;
     const apiKey = process.env.OPENAI_API_KEY;
 
+    if (!apiKey) {
+      return res.status(500).json({ error: 'API key is not defined' });
+    }
+
     try {
-      const response = await fetch('https://api.openai.com/v1/completions', {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
+          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
         },
         body: JSON.stringify({
-          model: 'gpt-3.5-turbo-instruct',
-          prompt,
+          model: 'gpt-3.5-turbo',
+          messages: [
+            { role: 'system', content: 'You are a helpful assistant.' },
+            { role: 'user', content: `Summarize the following meeting transcript:\n${prompt}` },
+          ],
           max_tokens,
         }),
       });

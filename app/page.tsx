@@ -8,8 +8,8 @@ import { Alert } from '@/components/ui/alert';
 
 
 export default function Home() {
-  const [transcript, setTranscript] = useState('');
-  const [summary, setSummary] = useState('');
+  const [transcript, setTranscript] = useState<string>('');
+  const [summary, setSummary] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
 
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
@@ -43,7 +43,7 @@ export default function Home() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            prompt: `Summarize the following meeting transcript:\n${chunk}`,
+            prompt: chunk,
             max_tokens: 200,
           }),
         });
@@ -55,7 +55,7 @@ export default function Home() {
 
         const data = await response.json();
         if (data.choices && data.choices.length > 0) {
-          combinedSummary += data.choices[0].text.trim() + '\n';
+          combinedSummary += data.choices[0].message.content.trim() + '\n';
         } else {
           throw new Error('Unexpected API response format');
         }
@@ -69,6 +69,8 @@ export default function Home() {
 
   return (
     <div className="container mx-auto p-4">
+
+
       <Card className="p-6 text-center border-dashed border-2 border-gray-400" onDrop={handleDrop} onDragOver={handleDragOver}>
         <p>Drag & drop your transcript here</p>
       </Card>
