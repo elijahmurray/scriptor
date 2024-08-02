@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
 import { Alert } from '@/components/ui/alert';
 import { Spinner } from '@/components/ui/spinner';
 import { SkeletonCard } from '@/components/SkeletonCard';
@@ -17,6 +16,13 @@ export default function Home() {
   const [loading, setLoading] = useState<boolean>(false);
   const [fileName, setFileName] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [summaryType, setSummaryType] = useState<string>('Quick Summary');
+
+  useEffect(() => {
+    if (summaryType) {
+      generateSummary();
+    }
+  }, [summaryType]);
 
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -49,7 +55,24 @@ export default function Home() {
     fileInputRef.current?.click();
   };
 
+  const getPrompt = () => {
+    switch (summaryType) {
+      case 'Quick Summary':
+        return 'Provide a quick summary of the following meeting transcript:';
+      case 'Bullet Summary':
+        return 'Provide a bullet-point summary of the following meeting transcript:';
+      case 'Slack Update':
+        return 'Provide a Slack update summary of the following meeting transcript:';
+      case 'Detailed Summary':
+        return 'Provide a detailed summary of the following meeting transcript:';
+      default:
+        return 'Provide a quick summary of the following meeting transcript:';
+    }
+  };
+
   const generateSummary = async () => {
+    if (!transcript) return;
+
     setLoading(true);
     setError(null);
     setSummary('');
@@ -70,7 +93,7 @@ export default function Home() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            prompt: chunk,
+            prompt: `${getPrompt()}\n${chunk}`,
             max_tokens: 200,
           }),
         });
@@ -112,16 +135,26 @@ export default function Home() {
         />
         <p className='text-gray-400 text-sm'>{fileName ? fileName : 'Drag & drop your transcript here or click to browse'}</p>
       </Card>
+
       <div className="mt-4 text-center">
-        <Button onClick={generateSummary} className="bg-black hover:bg-blue-100 hover:text-black border border-black text-white py-2 px-4 rounded w-full" disabled={!fileName || loading}>
-          {loading ? <Spinner /> : 'Generate Summary'}
-        </Button>
+        <p className="text-lg mt-12 mb-5 text-left">What type of summary do you need?</p>
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          {['Quick Summary', 'Bullet Summary', 'Slack Update', 'Detailed Summary'].map((type) => (
+            <Button
+              key={type}
+              onClick={() => {
+                setSummaryType(type);
+              }}
+              className="bg-black hover:bg-blue-100 hover:text-black border border-black text-white py-2 px-4 rounded"
+              disabled={!fileName || loading}
+            >
+              {loading && summaryType === type ? <Spinner /> : type}
+            </Button>
+          ))}
+        </div>
         <hr className='m-12' />
       </div>
 
-      <div>
-
-      </div>
       {transcript && (
         <div className="mt-4">
           {loading && (
