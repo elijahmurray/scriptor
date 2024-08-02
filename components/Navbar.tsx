@@ -14,7 +14,7 @@ import {
 
 const Navbar = () => {
     return (
-        <div className="flex justify-between items-center m-4">
+        <div className="flex justify-between items-center my-4">
             <div className="px-4 text-xs font-light uppercase">
                 scriptor
             </div>

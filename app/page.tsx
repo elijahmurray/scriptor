@@ -1,14 +1,10 @@
 "use client";
 
-import { useState, useRef } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Alert } from '@/components/ui/alert';
-import { Spinner } from '@/components/ui/spinner';
-import { SkeletonCard } from '@/components/SkeletonCard';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import { AiOutlineCopy } from 'react-icons/ai'; // Import the copy icon
+import { useState } from 'react';
+import FileUpload from '@/components/FileUpload';
+import SummaryButtons from '@/components/SummaryButtons';
+import SummaryDisplay from '@/components/SummaryDisplay';
+import { getPrompt } from '@/utils/prompts';
 
 export default function Home() {
   const [transcript, setTranscript] = useState<string>('');
@@ -16,56 +12,10 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [fileName, setFileName] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [summaryType, setSummaryType] = useState<string>('');
 
-  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    const file = event.dataTransfer.files[0];
-    setFileName(file.name);
-    const reader = new FileReader();
-    reader.onload = () => {
-      setTranscript(reader.result as string);
-    };
-    reader.readAsText(file);
-  };
-
-  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-  };
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setFileName(file.name);
-      const reader = new FileReader();
-      reader.onload = () => {
-        setTranscript(reader.result as string);
-      };
-      reader.readAsText(file);
-    }
-  };
-
-  const handleCardClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const getPrompt = (type: string) => {
-    switch (type) {
-      case 'Quick Summary':
-        return 'Provide a quick summary of the following meeting transcript:';
-      case 'Bullet Summary':
-        return 'Provide a bullet-point summary of the following meeting transcript:';
-      case 'Slack Update':
-        return 'Provide a Slack update summary of the following meeting transcript:';
-      case 'Detailed Summary':
-        return 'Provide a detailed summary of the following meeting transcript:';
-      default:
-        return 'Provide a quick summary of the following meeting transcript:';
-    }
-  };
-
   const generateSummary = async (type: string) => {
+    setSummaryType(type);
     setLoading(true);
     setError(null);
     setSummary('');
@@ -122,64 +72,10 @@ export default function Home() {
 
   return (
     <div className="container mx-auto p-4">
-      <Card
-        className={`p-6 text-center bg-gray-100 cursor-pointer ${fileName ? 'bg-gray-200' : 'hover:bg-gray-200'}`}
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-        onClick={handleCardClick}
-      >
-        <input
-          type="file"
-          ref={fileInputRef}
-          className="hidden"
-          onChange={handleFileChange}
-        />
-        <p className='text-gray-400 text-sm'>{fileName ? fileName : 'Drag & drop your transcript here or click to browse'}</p>
-      </Card>
-
-      <div className="mt-4 text-center">
-        <p className="text-lg mt-12 mb-5 text-left">What type of summary do you need?</p>
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          {['Quick Summary', 'Bullet Summary', 'Slack Update', 'Detailed Summary'].map((type) => (
-            <Button
-              key={type}
-              onClick={() => {
-                setSummaryType(type);
-                generateSummary(type);
-              }}
-              className="bg-black hover:bg-blue-100 hover:text-black border border-black text-white py-2 px-4 rounded"
-              disabled={!fileName || loading}
-            >
-              {loading && summaryType === type ? <Spinner /> : type}
-            </Button>
-          ))}
-        </div>
-        <hr className='m-12' />
-      </div>
-
+      <FileUpload onFileChange={(file, fileName) => { setTranscript(file); setFileName(fileName); }} fileName={fileName} />
+      <SummaryButtons fileName={fileName} loading={loading} generateSummary={generateSummary} summaryType={summaryType} />
       {transcript && (
-        <div className="mt-4 relative">
-          {loading && (
-            <div className="mt-4">
-              <SkeletonCard />
-            </div>
-          )}
-          {summary && (
-            <div className="mt-4 prose max-w-full">
-              <div className="flex justify-end">
-                <Button onClick={copyToClipboard} className="bg-gray-300 hover:bg-gray-400 text-black py-2 px-2 rounded">
-                  <AiOutlineCopy />
-                </Button>
-              </div>
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {summary}
-              </ReactMarkdown>
-            </div>
-          )}
-          {error && (
-            <Alert className="mt-4 text-red-500">{error}</Alert>
-          )}
-        </div>
+        <SummaryDisplay summary={summary} error={error} loading={loading} copyToClipboard={copyToClipboard} />
       )}
     </div>
   );
