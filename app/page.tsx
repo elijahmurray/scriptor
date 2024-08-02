@@ -1,23 +1,28 @@
 "use client";
 
 import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
+import { Alert } from '@/components/ui/alert';
+
 
 export default function Home() {
   const [transcript, setTranscript] = useState('');
   const [summary, setSummary] = useState('');
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleDrop = (event) => {
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     const file = event.dataTransfer.files[0];
     const reader = new FileReader();
     reader.onload = () => {
-      setTranscript(reader.result);
+      setTranscript(reader.result as string);
     };
     reader.readAsText(file);
   };
 
-  const handleDragOver = (event) => {
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
   };
 
@@ -64,32 +69,19 @@ export default function Home() {
 
   return (
     <div className="container mx-auto p-4">
-      <div
-        className="border-dashed border-2 border-gray-400 p-6 text-center"
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-      >
-        Drag & drop your transcript here
-      </div>
+      <Card className="p-6 text-center border-dashed border-2 border-gray-400" onDrop={handleDrop} onDragOver={handleDragOver}>
+        <p>Drag & drop your transcript here</p>
+      </Card>
       {transcript && (
         <div className="mt-4">
-          <button
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-            onClick={generateSummary}
-          >
+          <Button onClick={generateSummary} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
             Generate Summary
-          </button>
+          </Button>
           {summary && (
-            <textarea
-              className="mt-4 w-full h-64 border border-gray-300 p-2"
-              readOnly
-              value={summary}
-            ></textarea>
+            <Textarea className="mt-4 w-full h-64 border border-gray-300 p-2" readOnly value={summary}></Textarea>
           )}
           {error && (
-            <div className="mt-4 text-red-500">
-              {error}
-            </div>
+            <Alert className="mt-4 text-red-500">{error}</Alert>
           )}
         </div>
       )}
