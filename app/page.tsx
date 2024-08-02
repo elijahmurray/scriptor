@@ -5,10 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert } from '@/components/ui/alert';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
-
 import { SkeletonCard } from '@/components/SkeletonCard';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 export default function Home() {
   const [transcript, setTranscript] = useState<string>('');
@@ -55,7 +55,7 @@ export default function Home() {
     setSummary('');
 
     try {
-      const chunkSize = 4000;
+      const chunkSize = 16000;
       const chunks = [];
       for (let i = 0; i < transcript.length; i += chunkSize) {
         chunks.push(transcript.slice(i, i + chunkSize));
@@ -118,6 +118,10 @@ export default function Home() {
         </Button>
         <hr className='m-12' />
       </div>
+
+      <div>
+
+      </div>
       {transcript && (
         <div className="mt-4">
           {loading && (
@@ -126,7 +130,11 @@ export default function Home() {
             </div>
           )}
           {summary && (
-            <Textarea className="mt-4 w-full h-64 border border-gray-300 p-2" readOnly value={summary}></Textarea>
+            <div className="mt-4 prose max-w-full">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {summary}
+              </ReactMarkdown>
+            </div>
           )}
           {error && (
             <Alert className="mt-4 text-red-500">{error}</Alert>

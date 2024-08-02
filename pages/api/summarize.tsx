@@ -20,7 +20,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           model: 'gpt-3.5-turbo',
           messages: [
             { role: 'system', content: 'You are a helpful assistant.' },
-            { role: 'user', content: `Summarize the following meeting transcript:\n${prompt}` },
+            { role: 'user', content: `Summarize the following meeting transcript in bullets:\n${prompt}` },
           ],
           max_tokens,
         }),
