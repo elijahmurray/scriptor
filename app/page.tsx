@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Alert } from '@/components/ui/alert';
@@ -8,6 +8,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { SkeletonCard } from '@/components/SkeletonCard';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { AiOutlineCopy } from 'react-icons/ai'; // Import the copy icon
 
 export default function Home() {
   const [transcript, setTranscript] = useState<string>('');
@@ -16,13 +17,7 @@ export default function Home() {
   const [loading, setLoading] = useState<boolean>(false);
   const [fileName, setFileName] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [summaryType, setSummaryType] = useState<string>('Quick Summary');
-
-  useEffect(() => {
-    if (summaryType) {
-      generateSummary();
-    }
-  }, [summaryType]);
+  const [summaryType, setSummaryType] = useState<string>('');
 
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -55,8 +50,8 @@ export default function Home() {
     fileInputRef.current?.click();
   };
 
-  const getPrompt = () => {
-    switch (summaryType) {
+  const getPrompt = (type: string) => {
+    switch (type) {
       case 'Quick Summary':
         return 'Provide a quick summary of the following meeting transcript:';
       case 'Bullet Summary':
@@ -70,9 +65,7 @@ export default function Home() {
     }
   };
 
-  const generateSummary = async () => {
-    if (!transcript) return;
-
+  const generateSummary = async (type: string) => {
     setLoading(true);
     setError(null);
     setSummary('');
@@ -93,7 +86,7 @@ export default function Home() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            prompt: `${getPrompt()}\n${chunk}`,
+            prompt: `${getPrompt(type)}\n${chunk}`,
             max_tokens: 200,
           }),
         });
@@ -117,6 +110,14 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(summary).then(() => {
+      alert('Summary copied to clipboard!');
+    }, (err) => {
+      console.error('Could not copy text: ', err);
+    });
   };
 
   return (
@@ -144,6 +145,7 @@ export default function Home() {
               key={type}
               onClick={() => {
                 setSummaryType(type);
+                generateSummary(type);
               }}
               className="bg-black hover:bg-blue-100 hover:text-black border border-black text-white py-2 px-4 rounded"
               disabled={!fileName || loading}
@@ -156,7 +158,7 @@ export default function Home() {
       </div>
 
       {transcript && (
-        <div className="mt-4">
+        <div className="mt-4 relative">
           {loading && (
             <div className="mt-4">
               <SkeletonCard />
@@ -164,6 +166,11 @@ export default function Home() {
           )}
           {summary && (
             <div className="mt-4 prose max-w-full">
+              <div className="flex justify-end">
+                <Button onClick={copyToClipboard} className="bg-gray-300 hover:bg-gray-400 text-black py-2 px-2 rounded">
+                  <AiOutlineCopy />
+                </Button>
+              </div>
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {summary}
               </ReactMarkdown>
